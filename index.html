@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kanban Produção</title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>  
+<div class="relatorio-modal" id="relatorioModal">
+
+    <div class="relatorio-content">
+
+        <h2>Relatório de Produção</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Prioridade</th>
+                    <th>Quantidade</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+
+            <tbody id="relatorioBody"></tbody>
+
+        </table>
+
+        <div style="margin-top:20px;">
+            <button class="save" onclick="fecharRelatorio()">
+                Fechar
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    <div class="logo">KANBAN</div>
+
+    <div class="menu">
+
+        <div class="menu-item" onclick="abrirRelatorio()">
+    <div class="icon">📊</div>
+    <div class="text">Relatórios</div>
+</div>
+
+<div class="menu-item lixeira-area" id="trash">
+    <div class="icon">🗑️</div>
+    <div class="text">Lixeira</div>
+</div>
+<div class="menu-item ">    
+            <div class="icon">⚙️</div>
+            <div class="text">Seleção</div>
+        </div>
+
+
+        <div class="menu-item">
+            <div class="icon">📥</div>
+            <div class="text">Inicial</div>
+        </div>
+
+        <div class="menu-item">
+            <div class="icon">⚙️</div>
+            <div class="text">Seleção</div>
+        </div>
+
+        <div class="menu-item">
+            <div class="icon">🔧</div>
+            <div class="text">CQ Final</div>
+        </div>
+
+        <div class="menu-item">
+            <div class="icon">📊</div>
+            <div class="text">Relatórios</div>
+        </div>
+
+        <div class="menu-item">
+            <div class="icon">⚙️</div>
+            <div class="text">Configurações</div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main" id="main">
+
+    <div class="top">
+        <div>
+            <h1>Kanban</h1>
+            <div class="legenda">
+                🔴 Urgente 🟠 Crítico  🔵 Hoje 🟢 Amanhã
+            </div>
+        </div>
+
+        <button class="add-btn" onclick="openModal()">
+            + Nova Tarefa
+        </button>
+    </div>
+
+    <div class="board">
+        <div class="column">
+            <h2>📥 Inicial</h2>
+            <div class="cards" id="col-0"></div>
+        </div>
+
+        <div class="column">
+            <h2>⚙️ Seleção 3.1009</h2>
+            <div class="cards" id="col-1"></div>
+        </div>
+
+        <div class="column">
+            <h2>🔧  CQ Final 3.1009</h2>
+            <div class="cards" id="col-2"></div>
+        </div>
+
+        <div class="column">
+            <h2>🏭 Alocação 3.1012</h2>
+            <div class="cards" id="col-3"></div>
+        </div>
+
+        <div class="column">
+            <h2>📦 Expedição</h2>
+            <div class="cards" id="col-4"></div>
+        </div>
+
+        <div class="column">
+            <h2>✅ Conferência 3.1013</h2>
+            <div class="cards" id="col-5"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- MODAL -->
+
+<div class="modal" id="modal">
+
+    <div class="modal-content">
+
+        <h2>Nova Tarefa</h2>
+
+        <div class="form-group">
+            <label>Código do Item</label>
+            <input type="text" id="codigo" placeholder="....">
+        </div>
+
+        <div class="form-group">
+
+    <label>Prioridade</label>
+
+    <select id="prioridade">
+
+        <option value="Urgente">
+            🔴 Urgente
+        </option>
+
+        <option value="Crítico">
+            🟠 Crítico
+        </option>
+
+        <option value="Hoje">
+            🔵 Hoje
+        </option>
+
+        <option value="Amanhã">
+            🟢 Amanhã
+        </option>
+
+    </select>
+
+</div>
+
+        <div class="form-group">
+            <label>Quantidade</label>
+            <input type="number" id="quantidade">
+        </div>
+
+        <div class="form-group">
+            <label>Tempo para terminar</label>
+            <input type="number" id="tempo">
+        </div>
+
+        <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="data">
+        </div>
+
+        <div class="actions">
+            <button class="cancel" onclick="closeModal()">Cancelar</button>
+            <button class="save" onclick="createTask()">Salvar</button>
+        </div>
+
+    </div>
+
+</div>
+  <script src="script.js"></script>
+</body>
+</html>
