@@ -7,8 +7,43 @@
 <link rel="stylesheet" href="style.css">
 
 </head>
+<body>
 
-<body>  
+<input
+    type="file"
+    id="uploadArquivo"
+    multiple
+    accept=".pdf,image/*"
+    style="display:none"
+    onchange="processarArquivo()"
+>
+
+      <button onclick="document.getElementById('uploadArquivo').click()">
+    📥 Importar Arquivo
+      </button>
+
+<div id="pdfModal" class="pdf-modal">
+
+    <div class="pdf-content">
+
+        <button
+            class="fechar-pdf"
+            onclick="fecharPDF()"
+        >
+            ✖
+        </button>
+
+        <iframe
+            id="pdfFrame"
+            width="100%"
+            height="100%"
+        ></iframe>
+
+    </div>
+
+</div>
+
+
 <div class="relatorio-modal" id="relatorioModal">
 
     <div class="relatorio-content">
@@ -91,6 +126,13 @@
             <div class="text">Configurações</div>
         </div>
 
+        <button
+    id="limparTudo"
+    onclick="limparTodosCards()"
+>
+    🗑 Limpar Tudo
+     </button>
+
     </div>
 
 </div>
@@ -147,7 +189,22 @@
 
 </div>
 
-<!-- MODAL -->
+<div id="modalPosicoes" class="modal-posicoes">
+
+    <div class="modal-posicoes-box">
+
+        <button onclick="
+            document.getElementById('modalPosicoes')
+            .style.display='none'
+        ">
+            ✖
+        </button>
+
+        <div id="modalPosicoesConteudo"></div>
+
+    </div>
+
+</div>
 
 <div class="modal" id="modal">
 
@@ -161,30 +218,28 @@
         </div>
 
         <div class="form-group">
+            <label>Prioridade</label>
 
-    <label>Prioridade</label>
+            <select id="prioridade">
 
-    <select id="prioridade">
+                <option value="Urgente">
+                    🔴 Urgente
+                </option>
 
-        <option value="Urgente">
-            🔴 Urgente
-        </option>
+                <option value="Crítico">
+                    🟠 Crítico
+                </option>
 
-        <option value="Crítico">
-            🟠 Crítico
-        </option>
+                <option value="Hoje">
+                    🔵 Hoje
+                </option>
 
-        <option value="Hoje">
-            🔵 Hoje
-        </option>
+                <option value="Amanhã">
+                    🟢 Amanhã
+                </option>
 
-        <option value="Amanhã">
-            🟢 Amanhã
-        </option>
-
-    </select>
-
-</div>
+            </select>
+        </div>
 
         <div class="form-group">
             <label>Quantidade</label>
@@ -202,13 +257,22 @@
         </div>
 
         <div class="actions">
-            <button class="cancel" onclick="closeModal()">Cancelar</button>
-            <button class="save" onclick="createTask()">Salvar</button>
+            <button class="cancel" onclick="closeModal()">
+                Cancelar
+            </button>
+
+            <button class="save" onclick="createTask()">
+                Salvar
+            </button>
         </div>
 
     </div>
 
 </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

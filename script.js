@@ -24,9 +24,9 @@ const clientes = {
     "9520":"Dayco",
 };
 
-const columns = document.querySelectorAll('.cards');
-
 let draggedCard = null;
+
+const arquivosPDF = {};
 
 /* =========================================================
 MODAL
@@ -44,166 +44,110 @@ function closeModal(){
 CRIAR TAREFA
 ========================================================= */
 
-function createTask(){
+function criarCardImportado(item){
 
-    const codigoInput = document.getElementById('codigo');
-    const prioridadeInput = document.getElementById('prioridade');
-    const quantidadeInput = document.getElementById('quantidade');
-    const tempoInput = document.getElementById('tempo');
+    const card =
+        document.createElement("div");
 
-    const codigo = codigoInput.value.trim();
-
-    /* CORRIGIDO */
-    const prioridade = prioridadeInput.value.trim();
-
-    const quantidade = parseInt(quantidadeInput.value);
-    const tempo = parseInt(tempoInput.value);
-
-    /* VALIDAÇÕES */
-
-    if(codigo === ""){
-        alert("Digite o código");
-        return;
-    }
-
-    if(isNaN(quantidade) || quantidade <= 0){
-        alert("Quantidade inválida");
-        return;
-    }
-
-    if(isNaN(tempo) || tempo <= 0){
-        alert("Tempo inválido");
-        return;
-    }
-
-    const data = new Date().toLocaleDateString('pt-BR');
-
-    const prefixo = codigo.substring(0,4);
-
-    const cliente =
-        clientes[prefixo] || "Cliente não identificado";
-
-    const prazo =
-        Date.now() + (tempo * 60 * 1000);
-
-    const taskId =
-        "TASK-" + Date.now();
-
-    /* =====================================================
-    PROCURA DUPLICADO
-    ===================================================== */
-
-    const cards =
-        document.querySelectorAll('#col-0 .card');
-
-    let existente = null;
-
-    cards.forEach(card => {
-
-        if(card.dataset.codigo === codigo){
-            existente = card;
-        }
-
-    });
-
-    /* =====================================================
-    SE EXISTIR
-    ===================================================== */
-
-    if(existente){
-
-        const qtdAtual = parseInt(
-            existente.querySelector('.quantidade').textContent
-        );
-
-        const total = qtdAtual + quantidade;
-
-        existente.querySelector('.quantidade').textContent = total;
-
-        existente.dataset.quantidade = total;
-
-        ordenarColuna(
-            document.getElementById('col-0')
-        );
-
-        salvarDados();
-
-        closeModal();
-
-        limparFormulario();
-
-        return;
-    }
-
-    /* =====================================================
-    CRIA CARD
-    ===================================================== */
-
-    const card = document.createElement('div');
-
-    card.classList.add('card');
-
-    /* PRIORIDADE */
-
-    if(prioridade === "Urgente"){
-        card.classList.add('Urgente-card');
-    }
-
-    if(prioridade === "Crítico"){
-        card.classList.add('Crítico-card');
-    }
-
-    if(prioridade === "Hoje"){
-        card.classList.add('Hoje-card');
-    }
-
-    if(prioridade === "Amanhã"){
-        card.classList.add('Amanhã-card');
-    }
+    card.className =
+        `card ${item.prioridade}-card`;
 
     card.draggable = true;
 
-    card.dataset.id = taskId;
-    card.dataset.codigo = codigo;
-    card.dataset.prioridade = prioridade;
-    card.dataset.quantidade = quantidade;
-    card.dataset.data = data;
-    card.dataset.prazo = prazo;
+    card.dataset.id =
+        "TASK-" + Date.now();
+
+    card.dataset.codigo =
+        item.codigo;
+
+    card.dataset.prioridade =
+        item.prioridade;
+
+    card.dataset.quantidade =
+        item.quantidade;
+
+    card.dataset.data =
+        item.data;
+
+    card.dataset.prazo =
+        Date.now() + (12 * 60 * 60 * 1000);
+
+    card.dataset.arquivo =
+        item.arquivo;
+
+    card.dataset.estoque31012 =
+        item.estoque31012;
+
+    card.dataset.cliente =
+        item.cliente;
+
+    card.dataset.posicoes =
+         JSON.stringify(item.posicoes || []);
 
     card.innerHTML = `
-        <p>
-            <strong>Cliente:</strong>
-            <span class="cliente">${cliente}</span>
-        </p>
 
-        <p>
-            <strong>Código:</strong>
-            ${codigo}
-        </p>
+    <p>
+        <strong>Cliente:</strong>
+        ${item.cliente || cliente}
+    </p>
 
-        <p>
-            <strong>Prioridade:</strong>
-            ${prioridade}
-        </p>
+    <p>
+        <strong>Código:</strong>
+        ${item.codigo}
+    </p>
 
-        <p>
-            <strong>Quantidade:</strong>
-            <span class="quantidade">${quantidade}</span>
-        </p>
+    <p>
+        <strong>Prioridade:</strong>
+        ${item.prioridade}
+    </p>
 
-        <p>
-            <strong>Data:</strong>
-            ${data}
-        </p>
+    <p>
+        <strong>Quantidade:</strong>
 
-        <div class="timer"></div>
+        <span class="quantidade">
+            ${item.quantidade}
+        </span>
+    </p>
 
-        <div class="mobile-actions">
-            <button class="mobile-btn">
-                ➜ Próximo
-            </button>
-        </div>
-    `;
+    <p>
+        <strong>Estoque 3.1012:</strong>
+        ${item.estoque31012 || 0}
+    </p>
+
+    <p>
+        <strong>Data:</strong>
+        ${item.data}
+    </p>
+
+    <div class="timer"></div>
+<div class="acoes-card">
+
+    <button
+        class="icon-btn"
+        title="Posições"
+        onclick='verPosicoes(${JSON.stringify(item.posicoes || [])})'
+    >
+        📦
+    </button>
+
+    <button
+        class="icon-btn"
+        title="Visualizar PDF"
+        onclick="visualizarArquivo('${item.arquivo}')"
+    >
+        👁
+    </button>
+
+</div>
+
+    <div class="mobile-actions">
+
+        <button class="mobile-btn">
+            ➜ Próximo
+        </button>
+
+    </div>
+`;
 
     iniciarTimer(card);
 
@@ -211,18 +155,11 @@ function createTask(){
 
     adicionarAcaoMobile(card);
 
-    const colunaInicial =
-        document.getElementById('col-0');
-
-    colunaInicial.appendChild(card);
-
-    ordenarColuna(colunaInicial);
+    document
+        .getElementById("col-0")
+        .appendChild(card);
 
     salvarDados();
-
-    closeModal();
-
-    limparFormulario();
 }
 
 /* =========================================================
@@ -296,9 +233,8 @@ function adicionarAcaoMobile(card){
             clone.dataset.prazo =
                 card.dataset.prazo;
 
-            clone.dataset.id =
-                card.dataset.id;
-
+           clone.dataset.id =
+                draggedCard.dataset.id;
             clone.querySelector('.quantidade')
             .textContent = feita;
 
@@ -376,16 +312,351 @@ function iniciarTimer(card){
         setInterval(atualizarTempo, 1000);
 }
 
+function verPosicoes(posicoes){
+
+    let html = `
+        <h2>Posições do Estoque</h2>
+    `;
+
+    posicoes.forEach(p => {
+
+        html += `
+
+            <div class="posicao-item">
+
+                <strong>${p.local}</strong>
+
+                <span>
+                    ${p.quantidade}
+                </span>
+
+            </div>
+        `;
+    });
+
+    document.getElementById(
+        "modalPosicoesConteudo"
+    ).innerHTML = html;
+
+    document.getElementById(
+        "modalPosicoes"
+    ).style.display = "flex";
+}
+
+async function processarArquivo(){
+
+    const files =
+        document.getElementById("uploadArquivo").files;
+
+    if(files.length === 0){
+
+        alert("Selecione arquivos");
+
+        return;
+    }
+
+    for(const file of files){
+
+        const urlPDF =
+    URL.createObjectURL(file);
+
+arquivosPDF[file.name] = urlPDF;
+
+        if(file.type !== "application/pdf"){
+            continue;
+        }
+
+        const arrayBuffer =
+            await file.arrayBuffer();
+
+        const pdf =
+            await pdfjsLib.getDocument({
+                data: arrayBuffer
+            }).promise;
+
+        let textoCompleto = "";
+
+        /* =========================
+           LÊ TODAS PÁGINAS
+        ========================= */
+
+        for(let pagina = 1; pagina <= pdf.numPages; pagina++){
+
+            const page =
+                await pdf.getPage(pagina);
+
+            const textContent =
+                await page.getTextContent();
+
+            const items =
+    textContent.items;
+
+const linhas = {};
+
+items.forEach(item => {
+
+    const y =
+        Math.round(item.transform[5]);
+
+    if(!linhas[y]){
+        linhas[y] = [];
+    }
+
+    linhas[y].push({
+
+        texto: item.str,
+
+        x: item.transform[4]
+    });
+});
+
+/* ORDENA LINHAS */
+
+Object.keys(linhas)
+.forEach(y => {
+
+    linhas[y].sort((a,b)=>a.x - b.x);
+
+    const linhaTexto =
+        linhas[y]
+        .map(i => i.texto)
+        .join(" ");
+
+    textoCompleto +=
+        linhaTexto + "\n";
+});
+        }
+
+        console.log(textoCompleto);
+
+        processarTexto(
+            textoCompleto,
+            file.name
+        );
+    }
+}
+
+function processarTexto(texto, nomeArquivo){
+
+    const codigos = {};
+const regexCodigo =
+    /\d{4}\.\d{4}\.\d{2}/g;
+
+    let dataDocumento = "";
+
+    const dataMatch =
+        texto.match(/\d{2}\/\d{2}\/\d{4}/);
+
+    if(dataMatch){
+
+        dataDocumento = dataMatch[0];
+    }
+
+    /* =========================================
+       MELHORA LEITURA PDF SAP
+    ========================================= */
+
+    texto = texto
+        .replace(/\s+/g, " ")
+        .replace(/3\.1012-/g, "\n3.1012-")
+        .replace(/(\d{4}\.\d{4}\.\d{2})/g, "\n$1");
+
+    const linhas =
+        texto.split("\n");
+
+    let codigoAtual = null;
+
+   linhas.forEach(linha => {
+
+    linha = linha.trim();
+
+    const codigoEncontrado =
+        linha.match(regexCodigo);
+
+    if(codigoEncontrado){
+
+        const codigo =
+            codigoEncontrado[0];
+
+        codigoAtual = codigo;
+
+        const numeros =
+            linha.match(/\d+/g);
+
+        let quantidade = 0;
+
+        if(numeros && numeros.length > 0){
+
+            quantidade =
+                parseInt(
+                    numeros[numeros.length - 1]
+                );
+        }
+
+        const prefixo =
+            codigo.substring(0,4);
+
+        const cliente =
+            clientes[prefixo]
+            || "Cliente não identificado";
+
+        if(!codigos[codigo]){
+
+            codigos[codigo] = {
+
+                codigo,
+
+                cliente,
+
+                prioridade: "Hoje",
+
+                quantidade:
+                    quantidade,
+
+                estoque31012: 0,
+
+                data: dataDocumento,
+
+                arquivo: nomeArquivo,
+
+                posicoes: []
+            };
+        }
+
+        return;
+    }
+
+    if(
+        linha.includes("3.1012")
+        &&
+        codigoAtual
+    ){
+
+        const numeros =
+            linha.match(/\d+/g);
+
+        if(!numeros){
+            return;
+        }
+
+        const quantidadeEstoque =
+            parseInt(
+                numeros[numeros.length - 1]
+            );
+
+        codigos[codigoAtual]
+            .estoque31012 +=
+                quantidadeEstoque;
+
+        codigos[codigoAtual]
+            .posicoes.push({
+
+                local: linha,
+
+                quantidade:
+                    quantidadeEstoque
+            });
+    }
+
+});
+    console.log(codigos);
+
+    Object.values(codigos)
+    .forEach(item => {
+
+        criarCardImportado(item);
+    });
+}
+
+
+function visualizarArquivo(nomeArquivo){
+
+    const url =
+        arquivosPDF[nomeArquivo];
+
+    if(!url){
+
+        alert(
+            "PDF não está mais carregado.\nImporte o arquivo novamente."
+        );
+
+        return;
+    }
+
+    const modal =
+        document.getElementById("pdfModal");
+
+    const frame =
+        document.getElementById("pdfFrame");
+
+    frame.src = url;
+
+    modal.style.display = "block";
+}
+
+function fecharPDF(){
+
+    document.getElementById("pdfModal")
+    .style.display = "none";
+
+    document.getElementById("pdfFrame")
+    .src = "";
+}
+
+function verPosicoes(posicoes){
+
+    let html = `
+        <h2>Posições do Estoque</h2>
+    `;
+
+    posicoes.forEach(p => {
+
+        html += `
+
+            <div class="posicao-item">
+
+                <strong>${p.local}</strong>
+
+                <span>
+                    ${p.quantidade}
+                </span>
+
+            </div>
+        `;
+    });
+
+    document.getElementById(
+        "modalPosicoesConteudo"
+    ).innerHTML = html;
+
+    document.getElementById(
+        "modalPosicoes"
+    ).style.display = "flex";
+}
+
 /* =========================================================
 DRAG E DROP
 ========================================================= */
+
+
 function addDragEvents(card){
 
-    card.addEventListener('dragstart', () => {
+    card.setAttribute("draggable", true);
+
+    card.addEventListener('dragstart', (e) => {
 
         draggedCard = card;
 
+        e.dataTransfer.setData(
+            "text/plain",
+            card.dataset.id
+        );
+
+        e.dataTransfer.effectAllowed = "move";
+
         card.classList.add("dragging");
+
+        console.log("🟢 drag iniciado");
 
     });
 
@@ -395,98 +666,149 @@ function addDragEvents(card){
 
         draggedCard = null;
 
+        console.log("🔴 drag finalizado");
+
     });
 
 }
 
-columns.forEach(column => {
 
-    column.addEventListener('dragover', (e)=>{
 
-        e.preventDefault();
+/* =========================================================
+ATIVAR DRAG NAS COLUNAS
+========================================================= */
 
-    });
+function ativarColunas(){
 
-    column.addEventListener('drop', (e)=>{
+    const columns =
+        document.querySelectorAll('.cards');
 
-        e.preventDefault();
+    columns.forEach(column => {
 
-        if(!draggedCard) return;
+        column.addEventListener('dragover', (e)=>{
 
-        const quantidadeAtual = parseInt(
-            draggedCard.querySelector('.quantidade').textContent
-        );
+            e.preventDefault();
 
-        const quantidadeFeita = prompt(
-            `Quantidade concluída?\nDisponível: ${quantidadeAtual}`
-        );
 
-        if(
-            quantidadeFeita === null ||
-            quantidadeFeita === ""
-        ){
-            return;
-        }
+             console.log("🟦 dragover");
 
-        const feita = parseInt(quantidadeFeita);
+            e.dataTransfer.dropEffect = "move";
 
-        if(isNaN(feita) || feita <= 0){
+        });
 
-            alert("Quantidade inválida");
+        column.addEventListener('dragenter', (e)=>{
 
-            return;
-        }
+            e.preventDefault();
 
-        /* MOVE COMPLETO */
+            column.classList.add("drag-over");
 
-        if(feita >= quantidadeAtual){
+        });
 
-            column.appendChild(draggedCard);
+        column.addEventListener('dragleave', ()=>{
 
-            unirCardsDuplicados(column);
+            column.classList.remove("drag-over");
 
-        }else{
+        });
 
-            /* CLONA */
+        column.addEventListener('mouseenter', ()=>{
 
-            const clone =
-                draggedCard.cloneNode(true);
-
-            clone.dataset.prazo =
-                draggedCard.dataset.prazo;
-
-            clone.dataset.id =
-                draggedCard.dataset.id;
-
-            clone.querySelector('.quantidade')
-            .textContent = feita;
-
-            addDragEvents(clone);
-
-            adicionarAcaoMobile(clone);
-
-            iniciarTimer(clone);
-
-            column.appendChild(clone);
-
-            unirCardsDuplicados(column);
-
-            /* SOBRA */
-
-            draggedCard.querySelector('.quantidade')
-            .textContent =
-                quantidadeAtual - feita;
-        }
-
-        ordenarColuna(column);
-
-        salvarDados();
-
-        draggedCard = null;
-
-    });
+           console.log("🟦 entrou coluna");
 
 });
+
+        column.addEventListener('drop', (e)=>{
+
+            e.preventDefault();
+
+            column.classList.remove("drag-over");
+
+            if(!draggedCard){
+
+                console.log("❌ draggedCard null");
+
+                return;
+            }
+
+            console.log("📥 DROP OK");
+
+            const quantidadeAtual = parseInt(
+                draggedCard.querySelector('.quantidade').textContent
+            );
+
+            const quantidadeFeita = prompt(
+                `Quantidade concluída?\nDisponível: ${quantidadeAtual}`
+            );
+
+            if(
+                quantidadeFeita === null ||
+                quantidadeFeita === ""
+            ){
+                return;
+            }
+
+            const feita =
+                parseInt(quantidadeFeita);
+
+            if(isNaN(feita) || feita <= 0){
+
+                alert("Quantidade inválida");
+
+                return;
+            }
+
+            /* MOVE COMPLETO */
+
+            if(feita >= quantidadeAtual){
+
+                column.appendChild(draggedCard);
+
+            }else{
+
+                const clone =
+                    draggedCard.cloneNode(true);
+
+                clone.dataset.id =
+                    "TASK-" + Date.now();
+
+                clone.querySelector('.quantidade')
+                .textContent = feita;
+
+                clone.dataset.quantidade =
+                    feita;
+
+                addDragEvents(clone);
+
+                adicionarAcaoMobile(clone);
+
+                iniciarTimer(clone);
+
+                column.appendChild(clone);
+
+                const restante =
+                    quantidadeAtual - feita;
+
+                draggedCard.querySelector('.quantidade')
+                .textContent = restante;
+
+                draggedCard.dataset.quantidade =
+                    restante;
+            }
+
+            unirCardsDuplicados(column);
+
+            ordenarColuna(column);
+
+            salvarDados();
+
+            draggedCard = null;
+
+        });
+
+    });
+
+}
+
+    
 
 /* =========================================================
 LIXEIRA
@@ -532,6 +854,58 @@ trash.addEventListener('drop', (e)=>{
 
 });
 
+
+function limparTodosCards(){
+
+    const confirmar = confirm(
+
+        "Deseja apagar TODOS os cards?"
+    );
+
+    if(!confirmar){
+        return;
+    }
+
+    /* REMOVE CARDS */
+
+    document
+        .querySelectorAll('.card')
+        .forEach(card => {
+
+            if(card.timerInterval){
+
+                clearInterval(
+                    card.timerInterval
+                );
+            }
+
+            card.remove();
+        });
+
+    /* LIMPA STORAGE */
+
+    localStorage.removeItem(
+        "kanban_tarefas"
+    );
+
+    /* LIMPA PDFs */
+
+    for(const nome in arquivosPDF){
+
+        URL.revokeObjectURL(
+            arquivosPDF[nome]
+        );
+    }
+
+    Object.keys(arquivosPDF)
+    .forEach(key => {
+
+        delete arquivosPDF[key];
+    });
+
+    alert("Todos os cards foram removidos");
+}
+
 /* =========================================================
 RELATÓRIO
 ========================================================= */
@@ -560,7 +934,9 @@ function abrirRelatorio(){
     cards.forEach(card => {
 
         const codigo =
-            card.dataset.codigo;
+         card.dataset.codigo +
+    "_" +
+    card.dataset.prioridade;
 
         const prioridade =
             card.dataset.prioridade;
@@ -629,28 +1005,34 @@ UNIR DUPLICADOS
 function unirCardsDuplicados(coluna){
 
     const cards =
-        Array.from(coluna.querySelectorAll('.card'));
+        Array.from(
+            coluna.querySelectorAll('.card')
+        );
 
     const mapa = {};
 
-    cards.forEach(card=>{
+    cards.forEach(card => {
 
-        const id = card.dataset.id;
+        const codigo =
+            card.dataset.codigo;
 
         const quantidade = parseInt(
-            card.querySelector('.quantidade').textContent
+            card.querySelector('.quantidade')
+            .textContent
         );
 
-        if(!mapa[id]){
+        if(!mapa[codigo]){
 
-            mapa[id] = card;
+            mapa[codigo] = card;
 
         }else{
 
-            const cardExistente = mapa[id];
+            const cardExistente =
+                mapa[codigo];
 
             const qtdAtual = parseInt(
-                cardExistente.querySelector('.quantidade').textContent
+                cardExistente.querySelector('.quantidade')
+                .textContent
             );
 
             const total =
@@ -659,7 +1041,8 @@ function unirCardsDuplicados(coluna){
             cardExistente.querySelector('.quantidade')
             .textContent = total;
 
-            cardExistente.dataset.quantidade = total;
+            cardExistente.dataset.quantidade =
+                total;
 
             card.remove();
         }
@@ -667,6 +1050,8 @@ function unirCardsDuplicados(coluna){
     });
 
     ordenarColuna(coluna);
+
+    salvarDados();
 }
 
 /* =========================================================
@@ -680,14 +1065,34 @@ function salvarDados(){
     document.querySelectorAll('.card').forEach(card => {
 
         tarefas.push({
-            id: card.dataset.id,
-            codigo: card.dataset.codigo,
-            prioridade: card.dataset.prioridade,
-            quantidade: card.querySelector('.quantidade').textContent,
-            data: card.dataset.data,
-            prazo: card.dataset.prazo,
-            coluna: card.closest('.cards').id
-        });
+
+    id: card.dataset.id,
+
+    codigo: card.dataset.codigo,
+
+    prioridade: card.dataset.prioridade,
+
+    quantidade:
+        card.querySelector('.quantidade').textContent,
+
+    data: card.dataset.data,
+
+    prazo: card.dataset.prazo,
+
+    coluna: card.closest('.cards').id,
+
+    arquivo:
+        card.dataset.arquivo || "",
+
+    estoque31012:
+        card.dataset.estoque31012 || 0,
+
+    cliente:
+        card.dataset.cliente || "",
+
+    posicoes:
+        JSON.parse(card.dataset.posicoes || "[]")
+});
 
     });
 
@@ -720,7 +1125,8 @@ function carregarDados(){
         const card =
             document.createElement('div');
 
-        card.className = "card";
+        card.className =
+    `card ${item.prioridade}-card`;
 
         card.draggable = true;
 
@@ -830,6 +1236,25 @@ INICIAR
 
 window.addEventListener('DOMContentLoaded', ()=>{
 
+    const hoje = new Date();
+
+    const dia =
+        String(hoje.getDate()).padStart(2,'0');
+
+    const mes =
+        String(hoje.getMonth() + 1).padStart(2,'0');
+
+    const ano =
+        hoje.getFullYear();
+
+    const dataBrasil =
+        `${dia}/${mes}/${ano}`;
+
+    document.getElementById('data').value =
+        dataBrasil;
+
+    ativarColunas();
+
     carregarDados();
 
     restaurarScroll();
@@ -837,3 +1262,133 @@ window.addEventListener('DOMContentLoaded', ()=>{
     console.log("🚀 Sistema iniciado");
 
 });
+/* =========================================================
+CRIAR TAREFA MANUAL
+========================================================= */
+
+function createTask(){
+
+    const codigo =
+        document.getElementById('codigo').value;
+
+    const prioridade =
+        document.getElementById('prioridade').value;
+
+    const quantidade =
+        document.getElementById('quantidade').value;
+
+    const tempo =
+        document.getElementById('tempo').value;
+
+    let data =
+    document.getElementById('data').value;
+
+if(!data){
+
+    data = new Date()
+    .toLocaleDateString('pt-BR');
+}
+
+    if(!codigo || !quantidade){
+
+        alert("Preencha os campos obrigatórios");
+
+        return;
+    }
+
+    const cliente =
+        clientes[codigo.substring(0,4)]
+        || "Cliente não identificado";
+
+    const card =
+        document.createElement("div");
+
+    card.className =
+        `card ${prioridade}-card`;
+
+    card.draggable = true;
+
+    card.dataset.id =
+        "TASK-" + Date.now();
+
+    card.dataset.codigo =
+        codigo;
+
+    card.dataset.prioridade =
+        prioridade;
+
+    card.dataset.quantidade =
+        quantidade;
+
+    card.dataset.data =
+        data;
+
+    card.dataset.prazo =
+        Date.now() + (
+            (parseInt(tempo) || 12)
+            * 60 * 60 * 1000
+        );
+
+    card.innerHTML = `
+
+        <p>
+            <strong>Cliente:</strong>
+            ${cliente}
+        </p>
+
+        <p>
+            <strong>Código:</strong>
+            ${codigo}
+        </p>
+
+        <p>
+            <strong>Prioridade:</strong>
+            ${prioridade}
+        </p>
+
+        <p>
+            <strong>Quantidade:</strong>
+
+            <span class="quantidade">
+                ${quantidade}
+            </span>
+        </p>
+
+        <p>
+            <strong>Data:</strong>
+            ${data}
+        </p>
+
+        <div class="timer"></div>
+
+        <div class="mobile-actions">
+
+            <button class="mobile-btn">
+                ➜ Próximo
+            </button>
+
+        </div>
+    `;
+
+    iniciarTimer(card);
+
+    addDragEvents(card);
+
+    adicionarAcaoMobile(card);
+
+    document
+        .getElementById("col-0")
+        .appendChild(card);
+
+    ordenarColuna(
+        document.getElementById("col-0")
+    );
+
+    salvarDados();
+
+    limparFormulario();
+
+    closeModal();
+
+    console.log("✅ tarefa criada");
+}
